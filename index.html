@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">      
+    
+    <title>Frtr</title>    
+    <style type="text/css">
+    html body{
+      background-color:#01090F;
+      padding:0;
+      margin:0;
+      width:  100%;
+      height: 100%;
+      font-family:sans;
+    }
+    #header{
+      z-index:10;
+      position:absolute;
+      vertical-align:top;                                 
+      top:6px;
+      left:6px;
+      white-space: nowrap;
+    }
+    #header h1{
+      margin:0;
+      padding:0;
+      color:#EEEEEE;
+      vertical-align:top;
+      font-size:14px;
+    }
+    #header button,
+    #header a{ 
+      display:inline-block;
+      -webkit-appearance: none;
+      outline: none;
+      background-color:rgba(255,255,255,0.6);
+      margin:0;
+      padding:3px;
+      margin-left:1px;
+      text-decoration:none;
+      border:none;
+      font-size:12px;
+    }
+    #frtr{
+      position:absolute;
+    }
+    #description{
+      position:absolute;      
+      bottom:6px;
+      right:6px;
+      width:200px;
+      font-size:12px; 
+      padding:6px;
+      background-color:rgba(255,255,255,0.6);
+    }
+    #description h1,p{
+      margin:0;
+      padding:0;
+      margin-bottom:6px;
+    }
+    #source{
+      resize:none; 
+      background-color:#01090F;
+      font-family:monospace;
+      color:#EEEEEE;  
+      border:none;
+      top:46px;
+      font-size:12px;
+      padding:0;
+      margin:0;
+      font-size:12px; 
+      padding:6px;
+      padding-top:48px;
+    }
+    .noselect{
+      -webkit-user-select: none;  
+      -moz-user-select: none;    
+      -ms-user-select: none;      
+       user-select: none;
+    }
+    </style>
+    <!-- jQuery, DOM manipulation and more, MIT License, http://jquery.com/ -->
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+      integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+      crossorigin="anonymous"></script>
+    <script id="frtr_license">
+    /*
+    * Frtr
+    * Fractal trees for JavaScript. Some years ago I stumbled upon a little
+    * Processing Script that does something very similar. The Frtr algorithm is
+    * loosely inspired by it.
+    *
+    * Recursive Tree for Processing 2.0 by Daniel Shiffman.
+    * http://processing.org/examples/tree.html
+    *
+    * Fractal tree implementations in various programming languages.
+    * http://rosettacode.org/wiki/Fractal_tree
+    *
+    * The Frtr source code is released under the MIT License. 
+    * http://opensource.org/licenses/MIT
+    *
+    * The MIT License (MIT)
+    *
+    * Copyright (c) 2014 goldsource
+    *
+    * Permission is hereby granted, free of charge, to any person obtaining a
+    * copy of this software and associated documentation files (the "Software"),
+    * to deal in the Software without restriction, including without limitation
+    * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    * and/or sell copies of the Software, and to permit persons to whom the
+    * Software is furnished to do so, subject to the following conditions:
+    *
+    * The above copyright notice and this permission notice shall be included in
+    * all copies or substantial portions of the Software.
+    *
+    * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    */
+    </script>
+    <script id="frtr_method">
+    /**
+    * mFrtr method (microFrtr)
+    * You don't like classes, instances, objects and such fckn Enterprise
+    * Solution Software crap? Check out this method...
+    * A cute little script to plot a multibranch fractal tree on a given
+    * canvas context or any other object that knows beginPath, moveTo, lineTo
+    * and stroke methods.
+    * When I wrote the Frtr Class I started with something similar. You need
+    * almost no code to draw a fractal. Unfortunately I thought it
+    * would be better to implement features like noise, colors and other
+    * blingbling. Every feature increased the crappyness-factor. Refactoring
+    * is so boring, so I decided, not to do so.
+    * As excuse a micro version to illustrate the minimalistic beauty...
+    *
+    * mFrtr is a recursive method, once invoked, it will plot a line by a
+    * given length and an given angle. Aftewards the length value is
+    * multiplicated with a factor to reduce its size. For each branch the method
+    * calls itself with the modified position, the reduced length and an angle
+    * that is calculated by adding the spread per branch and the bias value to
+    * the input angle. There is a exit clause that cancels the execution when 
+    * the length value got smaller than the limit. Thats all.
+    *
+    * As special feature this method will throw an error on popular and 
+    * sometimes browser freezing fails :-D
+    * 
+    * The Params are:
+    * context, x, y, branches, spread, theta, bias, length, length factor and 
+    * last but not least the limit. 
+    */
+    function mFrtr(ctx,x,y,br,sprd,t,b,l,lf,lmt){
+      if(l<lmt) return; if(!ctx||lmt<=0||lf>=1||lf<0||br<1) throw "moron";
+      var tdpb=(br>1)?sprd/(br-1):0, tsd=(br>1)?(t-sprd/2)+b*sprd:t+b*sprd, i=0;          
+      ctx.beginPath(); ctx.moveTo(x,y); 
+      x+=l*Math.cos(t); y+=l*Math.sin(t);
+      ctx.lineTo(x,y); ctx.stroke(); 
+      l*=lf;
+      while(i<br) mFrtr(ctx,x,y,br,sprd,tsd+(tdpb*i++),b,l,lf,lmt);        
+    };
+    /**
+    * mFrtrExample
+    * will append a canvas to the DOM and draw a 2 Branch tree
+    **/
+    function mFrtrExample(){      
+      var deg_rad = Math.PI/180,
+      cv=document.createElement("canvas"),
+      ctx = cv.getContext('2d');
+      cv.id = 'mFrtr';
+      cv.width = ctx.width = 640;
+      cv.height = ctx.height  = 480;
+      cv.style['position'] = 'absolute';
+      document.body.appendChild(cv);
+      mFrtr(ctx,320,480,2,33*deg_rad,-90*deg_rad,0*deg_rad,120,.66,2); // magic
+    }
+    </script>
+    <script id="frtr_class">
+    /**
+    * Frtr Class
+    * Draw more complex fractal trees. Featuring cool persistent noise, colors
+    * and more.
+    
+    * Instantiate passing a canvas id. Every instance represents one tree. 
+    * To draw multiple trees, you might either swap the conf reference or use 
+    * multiple instances of this class.
+    * If you use varying noise_seeds to draw different trees it is faster 
+    * create multiple instances. Otherwise the noise lookup table (3*2^32)
+    * will be calculated every time you swap the conf and draw a tree.
+    *
+    * Take a look at the public methods 
+    * conf - Conf Reference Setter / Getter
+    * canvas - Canavas Setter / Getter (expects element)
+    * draw - slap it and it draws for you
+    *
+    * Frtr is self contained and does not depend on any 3rd party lib.
+    * Obviously HTML5, CSS & JavaScript are required
+    */
+    function Frtr(canvas){
+      var t = this, cv, ctx, conf, deg_rad = Math.PI/180, branch_count, 
+      noise = [], last_seed,
+      /*
+      * BEWARE: RECURSIVE TREES GROW INCREDIBLY FAST!
+      * max_branch and max_recursion will protect browsers from freezing.
+      */
+      max_branch = 2<<16, max_recursion = 2<<4,
+      defaults = {
+        length: 120, // initial length
+        length_factor: .666, // Per branch length multiplier
+        length_threshold: 3, // exit recursion when length drops below
+        length_noise: .0, // Length value noise multiplier
+        size: 1.0, // Initial line size
+        size_factor: 1.0, // Per branch length multiplier
+        size_threshold: 1.0, // exit recursion when size drops below
+        size_noise: .0, // Size value noise multiplier 
+        color: {r: .0, g: .0, b: .0, a: 1.0}, // line color
+        color_factor: {r: 1.0, g: 1.0, b: 1.0, a: 1.0}, // color modifier
+        color_rotate: true, // Cycles the color on overshoot
+        spread: 120, // maximum spread of the branches
+        spread_noise: .0, // Spread value noise multiplier
+        branches: 2, // up to 3 branches is relatively safe
+        origin: {x: 320, y: 480}, // the starting point  
+        direction: -90, // 0° is straight right. -90° aka 270° is straight up
+        bias: .0, // static bias, added to the rotation of each branch
+        trunk: true, // draw trunk?
+        trunk_bias: false, // rotate the trunk?
+        line_cap: 'round', // butt, round, or square
+        line_join: 'round', // miter, round, or bevel
+        noise_seed:142857, // any value between 0 - 2^16 creates a unique noise 
+      },
+      conf = {};   
+      /**
+      * Utility used to walk through the given conv object reference and insert
+      * missing but required parts. Somehow ugly and a bit dangerous.
+      */      
+      function insert_recursive(a,b){
+       for(var k in b){
+          if(!a.hasOwnProperty(k)){
+            if(Object.prototype.toString.call(b[k]) == '[object Array]'){
+              a[k] = []; insert_recursive(a[k],b[k]);
+            }else if(Object.prototype.toString.call(b[k]) == '[object Object]'){
+              a[k] = {}; insert_recursive(a[k],b[k]);            
+            }else{
+              a[k]=b[k];
+            }
+          }
+        }
+      }      
+      /** 
+      * Configuration Reference Getter/Setter
+      * Be Careful, the data is not cloned, it is referenced. If you pass an
+      * Object, required but non present key-value pairs will be inserted using
+      * default values. This changes the given Object!
+      * You might either fetch the current conf of the instance and modify it or
+      * pass an object that is managed by your program.
+      */
+      t.conf = function(obj_ref){
+        if(!obj_ref)return conf;
+        insert_recursive(obj_ref,defaults);
+        conf = obj_ref;
+        return conf;
+      }     
+      t.conf(conf);
+      /**
+      * Pass a canvas to draw on
+      */
+      t.canvas = function(canvas){        
+        if(!canvas)return canvas;
+        cv = canvas;    
+        try{    
+          ctx = cv.getContext('2d');
+        }catch(e){
+          throw "You have to pass the id of a canvas attached to the DOM";
+        }
+        return canvas;
+      };      
+      if(canvas)t.canvas(canvas);      
+      /**
+      * Invoke this method to draw the tree. This method does not clear the
+      * canvas it is drawing on, you have to clear it manually. 
+      */
+      t.draw = function(){
+        branch_count = 0;
+        if(conf.noise_seed != last_seed) calculateNoise();
+        if(!ctx) throw "No canvas specified";
+        ctx.lineCap = conf.line_cap;
+        ctx.lineJoin = conf.line_join;   
+        var t = conf.direction * deg_rad, r = conf.color.r, g = conf.color.g, 
+        b = conf.color.b, a = conf.color.a;
+        if(conf.trunk){
+          if(conf.trunk_bias) t = t+conf.bias*(conf.spread*deg_rad); 
+          p = next(conf.origin, t, conf.length);
+          line(conf.origin, p, conf.size, r, g, b, a);
+          t = t+conf.bias*(conf.spread*deg_rad); 
+        }else{
+          p = conf.origin;
+        }
+        branch(p, t, conf.length, conf.size, r, g, b, a, 0);
+      }  
+      /**
+      * Populate the noise lookup table
+      * This method generates non random noise using a very simple procedure
+      */
+      function calculateNoise(){
+        var seed_pi = conf.noise_seed*Math.PI,
+        seed_sqrt2 = conf.noise_seed*Math.sqrt(2),
+        seed_sqrt5 = conf.noise_seed*Math.sqrt(5);        
+        noise.length = 0; // remove previous
+        for(var i=0;i<max_branch;i++)
+          noise.push([(i*seed_pi)%1,(i*seed_sqrt2)%1,(i*seed_sqrt5)%1]);
+        last_seed = conf.noise_seed;
+      }
+      /**
+      * Branch recursive
+      * origin, theta, length, size, red, green, blue, alpha, count
+      **/
+      function branch(o, t, l, s, r, g, b, a, c){ 
+        if(++branch_count>=max_branch||++c>=max_recursion) return;
+        l = l*conf.length_factor-l*conf.length_noise*noise[branch_count][0];
+        s = s*conf.size_factor-s*conf.size_noise*noise[branch_count][1];
+        //for(c in conf.color_factor)[][c]*=conf.color_factor[c];
+        r *= conf.color_factor.r;
+        g *= conf.color_factor.g;
+        b *= conf.color_factor.b;
+        a *= conf.color_factor.a;
+        if(l<conf.length_threshold||s<conf.size_threshold) return;
+        var p, sprd, tdpb, tsd, i=0;
+        p = next(o,t,l);
+        sprd = conf.spread*deg_rad;
+        sprd = sprd-(sprd*conf.spread_noise*noise[branch_count][2]);      
+        tdpb = (conf.branches>1)?sprd/(conf.branches-1):0;
+        tsd =  (conf.branches>1)?(t-sprd/2)+conf.bias*sprd:t+conf.bias*sprd;
+        line(o, p, s, r, g, b, a);
+        while(i<conf.branches) branch(p, tsd+(tdpb*i++), l, s, r, g, b, a, c);
+      }
+      /**
+      * Next Point by angle in rads and length
+      * origin, theta, length
+      **/
+      function next(o, t, l){
+        return {x:o.x+l*Math.cos(t),y:o.y+l*Math.sin(t)}
+      }
+      /**
+      * line
+      * from Point, to Point, size, red, green, blue, alpha
+      **/
+      function line(p1, p2, s, r, g, b, a){
+        var c
+        if(conf.color_rotate){
+         c ='rgb('+
+            (((r<0||r>1)?r%1:r)*255|0)+','+
+            (((g<0||g>1)?g%1:g)*255|0)+','+
+            (((b<0||b>1)?b%1:b)*255|0)+
+          ')'; 
+        }else{
+          c ='rgb('+(r*255|0)+','+(g*255|0)+','+(b*255|0)+')'; 
+        }
+        ctx.beginPath(); 
+        ctx.moveTo(p1.x,p1.y);
+        ctx.lineTo(p2.x,p2.y);     
+        ctx.lineWidth = s;       
+        ctx.strokeStyle  = c;
+        ctx.globalAlpha = (conf.color_rotate&&(a<0||a>1)?a%1:a);
+        ctx.stroke();
+      }
+    };
+    </script>
+    <script id="frtr_example">
+    /*
+    * Frtr Usage
+    * The Frtr Class is a bit stupid. The following code illustrates how to
+    * build a small interative app around frtr
+    */
+    $(document).ready(function(){
+      var src="<html>\n"+$("html").html().replace(/(\s{1,}$)/gm,'')+"\n</html>",
+      license=$("#frtr_license").html().replace(/(^\s{4,4}|\s{1,}$)/gm,''),
+      cls=$("#frtr_class").html().replace(/(^\s{4,4}|\s{1,}$)/gm,''),
+      mtd=$("#frtr_method").html().replace(/(^\s{4,4}|\s{1,}$)/gm,''),
+      cv = document.getElementById("frtr"),
+      ctx = cv.getContext('2d'),
+      w = 640,
+      h = 480,
+      frtr = new Frtr(),
+      selected = 0,
+      animate = false,  
+      /*
+      * 8 different fractal tree presets. The background_color, max_branches and  
+      * max_spread parameters are not used by the Frtr Class itself, they are
+      * only used within this example
+      */
+      conf = [{
+        background_color:'rgb(1,9,15)',
+        max_spread: 180, 
+        max_branches:4,
+        length_factor: 0.7, 
+        length_threshold: 5/.7, 
+        size: 16,
+        size_factor: .68,
+        size_threshold: 16/20,
+        color: {r: 0.9, g: 0.9, b: 0.9, a: 1.0},
+        color_factor: {r: 0.9, g: 0.95, b: 0.95, a: 0.8},
+        branches: 4, 
+        direction: -90
+      },{
+        background_color:'#666666',
+        max_spread: 127, 
+        max_branches:3,
+        length_factor: .82, 
+        length_threshold: 2, 
+        length_noise: .4,
+        size: 7.0,
+        size_factor: 0.8,
+        size_threshold: 0.5,
+        size_noise: .05,
+        color: {r: .2, g: .01, b: .0, a: 1.0},
+        color_factor: {r: 0.8, g: 1.1, b: 1.0, a: 1.0}, // rotate green
+        spread_noise: 0.3, 
+        branches: 3, 
+        direction: -90, 
+        trunk_bias: true, // rotate trunk
+        noise_seed:142859, // 0 - 2^16
+      },{
+        background_color:'#000802', 
+        max_spread: 270, 
+        max_branches:3,
+        length_factor: .99, // Dangerous
+        length_threshold: 1, 
+        length_noise: .4,
+        size: 180.0,
+        size_factor: 0.66,
+        size_threshold: 2,
+        size_noise: .1,
+        color: {r: 0.2, g: .0, b: .9, a: 0.1},
+        color_factor: {r: 1.8, g: 1.0, b: 0.2, a: 1.1}, // clip red and alpha
+        color_rotate: false,
+        spread_noise: 0.4, 
+        branches: 2, 
+        direction: -90, 
+        trunk:false,
+        noise_seed:51280, // 0 - 2^16
+      },{
+        background_color:'#EEFF99', 
+        max_spread: 360, 
+        max_branches:3,
+        length_factor: 0.9, 
+        length_threshold: 1, 
+        length_noise: 0.2,
+        size: 30.0,
+        size_factor: 0.6,
+        size_threshold: 0.2,
+        size_noise: .0,
+        color: {r: 0.0, g: .0, b: .0, a: 0.5},
+        color_factor: {r: 1.0, g: 1.05, b: 1.5, a: 1.05},
+        spread_noise: 1, 
+        branches: 2, 
+        trunk:false,
+        noise_seed:666,
+      },{
+        background_color:'#000000', 
+        max_spread: 360, 
+        max_branches:2,
+        length_factor: .77, 
+        length_threshold: 6, 
+        length_noise: 0.2,
+        size: 60.0,
+        size_factor: 0.99,
+        size_threshold: 1,
+        size_noise: 0.6,
+        color: {r: 0.2, g: .0, b: 1, a: 0.80},
+        color_factor: {r: 1.0, g: 1.0, b: 1.0, a:-1.1},
+        spread_noise: .0, 
+        branches: 2,
+        trunk_bias: true,
+        noise_seed:251575,
+      },{
+        background_color:'#FFFFFF', 
+        max_spread: 180, 
+        max_branches: 2,
+        length_factor: 0.9, 
+        length_threshold: 1, 
+        length_noise: 0.0,
+        size: 30.0,
+        size_factor: 0.66,
+        size_threshold: 0.2,
+        size_noise: .0,
+        color: {r: .0, g: .0, b: .0, a: 1.0},
+        color_factor: {r: 1.0, g: 1.0, b: 1.0, a: 1.0},
+        spread_noise: .1, 
+        branches: 2, 
+        trunk:false,
+        noise_seed:68140,
+      },{
+        background_color:'#190000', 
+        max_spread: 180, 
+        max_branches:2,
+        length_factor: 0.73, 
+        length_threshold: 6, 
+        length_noise: 0.1,
+        size: 1.0,
+        size_factor: 1.6, // Beware its a hack
+        size_threshold: 0,
+        size_noise: .3,
+        color: {r: 1.0, g: 1.0, b: 1.0, a: 1.0},
+        color_factor: {r: 1.0, g: 1.0, b: 1.0, a: 1.5}, // rotate alpha
+        spread_noise: 0.0, 
+        branches: 2, 
+        trunk_bias:true,
+      },{
+        background_color:'#000000', 
+        max_spread: 360, 
+        max_branches:2,
+        length_factor: 0.85, 
+        length_threshold: 30, 
+        length_noise: 0.0,
+        size: 120.0,
+        size_factor: 0.66,
+        size_threshold: 0,
+        size_noise: .00,
+        color: {r: 1.0, g: 1.0, b: 1.0, a: 1.0},
+        color_factor: {r: 1.0, g: 1.0, b: 1.0, a: .5},
+        spread_noise: 0.0, 
+        branches: 1, 
+      }];     
+      frtr.canvas(cv);
+      frtr.conf().background_color = '#CCCCCC'; // hack frtr default
+      frtr.conf().max_spread = 180; // btw not best practivce to change conf 
+      frtr.conf().max_branches = 3;
+      conf.unshift(frtr.conf()); // prepend frtr default
+      function draw(){
+        ctx.fillStyle = conf[selected].background_color;
+        ctx.globalAlpha = 1.00;
+        ctx.fillRect(0, 0, w, h);
+        frtr.draw();    
+      }
+      function resize(e){
+        w = $(window).width();
+        h = $(window).height();
+        cv.width = ctx.width = w;
+        cv.height = ctx.height = h; 
+    	cv.style.position = "absolute";
+    	cv.style.display = "block";
+    	cv.setAttribute("width", w);
+    	cv.setAttribute("height", h);
+        treePositioning();
+        draw();
+      };
+      function treePositioning(){        
+        conf[selected].length = Math.max(160,h/4);
+        conf[selected].origin.x = w/2;
+        conf[selected].origin.y = h;
+      }
+      function mousemove(e){
+        conf[selected].bias = ((e.pageX/w)*2-1)/4;
+        conf[selected].spread = (e.pageY/h)*conf[selected].max_spread; 
+        if(animate) draw();
+      }; 
+      function mousedown(e){
+        animate = true; 
+        draw();
+      };  
+      function mouseup(e){
+	animate = false;         
+      };  
+      function keypress(e){
+        switch (true){
+          case e.which >= 49 && e.which <=58: //1-9
+            selected = e.which-49;
+            frtr.conf(conf[selected]);
+            e.preventDefault();
+            treePositioning();
+            draw();
+            break;  
+          case e.which == 43: // +
+            if(++conf[selected].branches>conf[selected].max_branches)
+              conf[selected].branches=conf[selected].max_branches;
+            e.preventDefault();
+            draw();
+            break;    
+          case e.which == 45: // -
+            if(--conf[selected].branches<1) conf[selected].branches=1;
+            e.preventDefault();
+            draw();
+            break;
+          case e.which == 32: // SPACE
+            conf[selected].noise_seed = (Math.random()*(2<<16))|0;
+            e.preventDefault();
+            draw();
+            break;                                    
+        }
+      };
+      function canvasClick(e){  
+        $('body').css("overflow","hidden");  
+        $('#source').hide();   
+        $('#frtr').show();   
+        $('#description').show();  
+      }
+      function sourceClick(e){   
+        $('body').css("overflow","scroll"); 
+        $('#frtr').hide();  
+        $('#description').hide();
+        $('#source').text(src);
+        $('#source').show();      
+      }
+      function classClick(e){
+        $('body').css("overflow","scroll"); 
+        $('#frtr').hide();  
+        $('#description').hide();
+        $('#source').text(license+'\n'+cls);
+        $('#source').show();    
+      }
+      function methodClick(e){  
+        $('body').css("overflow","scroll"); 
+        $('#frtr').hide();  
+        $('#description').hide();
+        $('#source').text(license+'\n'+mtd);
+        $('#source').show();    
+      }
+      $(window).keypress(keypress);
+      $('.responsive').mousemove(mousemove);
+      $('.responsive').mousedown(mousedown);
+      $('.responsive').mouseup(mouseup);
+      $(window).resize(resize);
+      $("#show_canvas").click(canvasClick);
+      $("#show_source").click(sourceClick);
+      $("#show_class").click(classClick);
+      $("#show_method").click(methodClick);      
+      $('body').css("overflow","hidden"); 
+      resize();
+    }); 
+    </script>
+  </head>
+  <body style="overflow: hidden;">   
+    <div id="header" class="noselect">
+      <a href="http://goldsource.de/">goldsource</a><a href="http://goldsource.de/frtr">frtr</a> 
+      <button id="show_canvas">canvas</button><button id="show_source">view source</button><button id="show_class">get class</button><button id="show_method">get method</button>
+    </div>    
+    <canvas id="frtr" class="responsive" width="2316" height="1349" style="position: absolute; display: block;"></canvas>
+    <div id="description" class="responsive noselect">
+      <h1>Frtr</h1>
+      <p>Fractal Trees with JavaScript.</p>
+      <p>Move MOUSE while LEFT BUTTON is DOWN to change the spread and the bias.</p>
+      <p>Type 1 to 9 to change the template.</p>
+      <p>Hit SPACE to randomize seed.</p>
+      <p>Hit + or - to change branch count.</p>
+    </div>
+    <pre id="source" style="display:none"></pre>
+  
+</body></html>
