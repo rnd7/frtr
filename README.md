@@ -9,7 +9,7 @@ Open index.html in your Browser
 
 ## Screenshot
 
-![screenshot](https://raw.githubusercontent.com/rnd7/infinite/frtr/doc/screenshot.png)
+![screenshot](https://raw.githubusercontent.com/rnd7/frtr/master/doc/screenshot.png)
 
 ## License
 
