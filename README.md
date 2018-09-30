@@ -5,7 +5,7 @@ Fractal trees for JavaScript. Some years ago I stumbled upon a little Processing
 [Fractal tree implementations in various programming languages](http://rosettacode.org/wiki/Fractal_tree)
 
 ## Run
-Open index.html in your Browser
+Open index.html in your browser or navigate to [frtr](https://rnd7.github.io/frtr/)
 
 ## Screenshot
 
